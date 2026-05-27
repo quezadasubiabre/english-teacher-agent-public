@@ -9,8 +9,13 @@ For someone whose main goal is practicing speaking, the teacher's role in that i
  
 My current routine is two daily 15-minute sessions with ChatGPT Voice Mode, and it works well. That's precisely why the goal here isn't to build yet another conversational agent. The real value to add is **real-time feedback while I speak**.
  
+
 ---
  
+## Demo
+
+[![Demo](https://cdn-cf-east.streamable.com/image/sjfgaq.jpg)](https://streamable.com/sjfgaq)
+
 ## Product
  
 A web application — and potentially a Google Meet plugin — with four core features:
@@ -19,3 +24,19 @@ A web application — and potentially a Google Meet plugin — with four core fe
 - **Inline corrections** — grammar mistakes are underlined in red with a correction tooltip, a few seconds after they happen
 - **Ghost text** — after 3 seconds of silence, a grayed-out suggestion appears showing how to continue the sentence
 - **Filler word tracker** — words like "uh", "like", or "you know" are highlighted in amber, with a per-session counter for each one
+
+## Local setup
+
+Start pipecat bot:
+
+```bash
+cd server
+uv run bot.py
+```
+
+Start frontend:
+
+```bash
+cd client
+npm run dev
+```
