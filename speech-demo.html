@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Web Speech API Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f3;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .app {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    h1 { font-size: 18px; color: #1a1a1a; font-weight: 600; }
+    .card {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #999;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #ccc;
+    }
+    .dot.active {
+      background: #e24b4a;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    #transcript {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      min-height: 80px;
+    }
+    .interim { color: #aaa; }
+
+    #status {
+      font-size: 13px;
+      color: #999;
+      text-align: center;
+      padding: 4px 0;
+    }
+
+    .mic-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #micBtn {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      border: none;
+      background: #185fa5;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #micBtn:hover { background: #0c447c; }
+    #micBtn.recording { background: #e24b4a; }
+    #micBtn.recording:hover { background: #a32d2d; }
+
+    #clearBtn {
+      font-size: 12px;
+      color: #999;
+      background: none;
+      border: 1px solid #e5e5e5;
+      border-radius: 20px;
+      padding: 4px 14px;
+      cursor: pointer;
+    }
+    #clearBtn:hover { color: #555; border-color: #ccc; }
+
+    .info {
+      font-size: 12px;
+      color: #bbb;
+      text-align: center;
+      padding: 4px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>Web Speech API — Demo</h1>
+
+  <div class="card">
+    <div class="label">
+      <span class="dot" id="dot"></span>
+      Live transcript
+    </div>
+    <div id="transcript">
+      <span id="final"></span><span class="interim" id="interim"></span>
+    </div>
+  </div>
+
+  <div id="status">Press the mic to start</div>
+
+  <div class="mic-wrap">
+    <button id="micBtn" title="Start / Stop">🎙️</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <p class="info">⚠️ Only works in Chrome or Edge · Requires internet</p>
+</div>
+
+<script>
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    document.getElementById('status').textContent = '❌ Your browser does not support Web Speech API. Use Chrome or Edge.'
+  } else {
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-US'
+    recognition.interimResults = true   // get words while speaking
+    recognition.continuous = true       // don't stop after one sentence
+
+    let isListening = false
+    let finalText = ''
+
+    const micBtn    = document.getElementById('micBtn')
+    const dot       = document.getElementById('dot')
+    const finalEl   = document.getElementById('final')
+    const interimEl = document.getElementById('interim')
+    const statusEl  = document.getElementById('status')
+
+    // — result: fires constantly while speaking —
+    recognition.onresult = (event) => {
+      let interim = ''
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i]
+        if (result.isFinal) {
+          finalText += result[0].transcript + ' '
+        } else {
+          interim += result[0].transcript
+        }
+      }
+
+      finalEl.textContent = finalText
+      interimEl.textContent = interim   // gray, updates fast
+    }
+
+    // — auto-restart after silence (Web Speech API stops on its own) —
+    recognition.onend = () => {
+      if (isListening) recognition.start()
+    }
+
+    recognition.onerror = (e) => {
+      if (e.error !== 'no-speech') {
+        statusEl.textContent = `Error: ${e.error}`
+      }
+    }
+
+    // — mic button toggle —
+    micBtn.addEventListener('click', () => {
+      if (isListening) {
+        isListening = false
+        recognition.stop()
+        micBtn.textContent = '🎙️'
+        micBtn.classList.remove('recording')
+        dot.classList.remove('active')
+        statusEl.textContent = 'Stopped · Press mic to resume'
+      } else {
+        isListening = true
+        recognition.start()
+        micBtn.textContent = '⏹️'
+        micBtn.classList.add('recording')
+        dot.classList.add('active')
+        statusEl.textContent = 'Listening...'
+      }
+    })
+
+    // — clear —
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      finalText = ''
+      finalEl.textContent = ''
+      interimEl.textContent = ''
+    })
+  }
+</script>
+</body>
+</html>
